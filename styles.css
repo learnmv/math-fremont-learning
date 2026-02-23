@@ -361,9 +361,222 @@ h1 {
     color: var(--primary);
 }
 
+/* Summary Section */
+.quiz-summary {
+    width: 100%;
+    max-width: 600px;
+    margin-top: 2rem;
+    animation: slideUp 0.4s ease;
+}
+
+@keyframes slideUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.summary-wrapper {
+    background: var(--card);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+}
+
+.summary-header {
+    background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.summary-header h2 {
+    font-size: 1.25rem;
+    margin: 0;
+}
+
+.session-date {
+    font-size: 0.85rem;
+    opacity: 0.9;
+}
+
+.summary-section {
+    padding: 1.5rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.summary-section:last-of-type {
+    border-bottom: none;
+}
+
+.summary-section h3 {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-light);
+    margin-bottom: 1rem;
+}
+
+/* History Stats */
+.stats-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+}
+
+.stat-mini {
+    flex: 1;
+    min-width: 80px;
+    text-align: center;
+    background: #f8fafc;
+    padding: 1rem 0.5rem;
+    border-radius: 12px;
+}
+
+.stat-mini .stat-num {
+    display: block;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-mini span:last-child {
+    font-size: 0.75rem;
+    color: var(--text-light);
+}
+
+.comparison-row {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #f1f5f9;
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.comparison-row .arrow {
+    font-size: 1.1rem;
+}
+
+/* Weak Areas */
+.weak-topics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 0.75rem;
+}
+
+.weak-topic-card {
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+    padding: 0.75rem;
+    text-align: center;
+}
+
+.topic-name {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 0.25rem;
+}
+
+.topic-rate {
+    display: block;
+    font-size: 1.1rem;
+    font-weight: 700;
+}
+
+/* Question Breakdown */
+.question-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.q-item {
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 0.5rem;
+    border-left: 4px solid;
+}
+
+.q-item.correct {
+    background: #f0fdf4;
+    border-left-color: var(--success);
+}
+
+.q-item.wrong {
+    background: #fef2f2;
+    border-left-color: var(--error);
+}
+
+.q-info {
+    display: flex;
+    gap: 0.75rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.q-num {
+    font-weight: 700;
+    color: var(--text);
+    min-width: 30px;
+}
+
+.q-topic {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    background: rgba(0,0,0,0.05);
+    border-radius: 12px;
+    color: var(--text-light);
+}
+
+.q-time {
+    font-size: 0.8rem;
+    color: var(--text-light);
+    margin-left: auto;
+}
+
+.q-detail {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed rgba(0,0,0,0.1);
+    font-size: 0.85rem;
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.q-detail span {
+    color: var(--error);
+}
+
+.q-detail .correct-ans {
+    color: var(--success);
+    font-weight: 600;
+}
+
+/* Summary Actions */
+.summary-actions {
+    display: flex;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    background: #fafafa;
+    border-top: 1px solid #f1f5f9;
+}
+
+.summary-actions .btn {
+    flex: 1;
+    padding: 0.75rem;
+    font-size: 0.9rem;
+}
+
 /* Responsive */
 @media (max-width: 480px) {
     h1 { font-size: 1.75rem; }
     #question-text { font-size: 1.1rem; }
     .score-circle { width: 120px; height: 120px; font-size: 2.5rem; }
+    
+    .summary-header { flex-direction: column; gap: 0.5rem; text-align: center; }
+    .stats-row { justify-content: center; }
+    .summary-actions { flex-direction: column; }
 }

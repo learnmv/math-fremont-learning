@@ -1,3 +1,89 @@
+// Quiz History Manager
+const QuizHistory = {
+    STORAGE_KEY: 'mathQuiz_history',
+    
+    save(quizData) {
+        const history = this.getAll();
+        const session = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            grade: quizData.grade,
+            score: quizData.score,
+            totalQuestions: quizData.totalQuestions,
+            totalTime: quizData.totalTime,
+            avgTime: quizData.avgTime,
+            questions: quizData.questions.map(q => ({
+                topic: q.topic,
+                text: q.text,
+                correct: q.correct,
+                userAnswer: q.userAnswer,
+                correctAnswer: q.correctAnswer,
+                time: q.time
+            }))
+        };
+        history.unshift(session);
+        // Keep only last 50 sessions
+        if (history.length > 50) history.pop();
+        localStorage.setItem(this.STORAGE_KEY, JSON.stringify(history));
+        return session.id;
+    },
+    
+    getAll() {
+        const data = localStorage.getItem(this.STORAGE_KEY);
+        return data ? JSON.parse(data) : [];
+    },
+    
+    getStats() {
+        const history = this.getAll();
+        if (history.length === 0) return null;
+        
+        const scores = history.map(h => (h.score / h.totalQuestions) * 100);
+        return {
+            totalQuizzes: history.length,
+            avgScore: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1),
+            bestScore: Math.max(...scores).toFixed(1),
+            currentStreak: this.getStreak(history),
+            lastQuiz: history[0]
+        };
+    },
+    
+    getStreak(history) {
+        let streak = 0;
+        for (const quiz of history) {
+            if (quiz.score >= quiz.totalQuestions / 2) streak++;
+            else break;
+        }
+        return streak;
+    },
+    
+    getWeakTopics(grade) {
+        const history = this.getAll().filter(h => h.grade === grade);
+        const topicStats = {};
+        
+        history.forEach(session => {
+            session.questions.forEach(q => {
+                if (!topicStats[q.topic]) topicStats[q.topic] = { correct: 0, total: 0 };
+                topicStats[q.topic].total++;
+                if (q.correct) topicStats[q.topic].correct++;
+            });
+        });
+        
+        return Object.entries(topicStats)
+            .filter(([_, stats]) => stats.total >= 3) // At least 3 attempts
+            .map(([topic, stats]) => ({
+                topic,
+                rate: (stats.correct / stats.total * 100).toFixed(0),
+                accuracy: (stats.correct / stats.total * 100).toFixed(1)
+            }))
+            .sort((a, b) => a.rate - b.rate) &>
+            .slice(0, 3); // Top 3 weak areas
+    },
+    
+    clear() {
+        localStorage.removeItem(this.STORAGE_KEY);
+    }
+};
+
 // Question Banks
 const questions = {
     6: [
@@ -34,6 +120,7 @@ let score = 0;
 let startTime = 0;
 let times = [];
 let answered = false;
+let questionResults = []; // Track detailed results per question
 
 // Screens
 const screens = {
@@ -53,6 +140,7 @@ function startQuiz(grade) {
     currentQuestion = 0;
     score = 0;
     times = [];
+    questionResults = [];
     
     document.documentElement.style.setProperty('--primary', grade === 6 ? '#f97316' : '#10b981');
     document.documentElement.style.setProperty('--primary-dark', grade === 6 ? '#ea580c' : '#059669');
@@ -65,6 +153,7 @@ function loadQuestion() {
     answered = false;
     const q = currentQuestions[currentQuestion];
     startTime = Date.now();
+    window.currentQuestionData = q; // Store for result tracking
     
     document.getElementById('progress').style.width = `${((currentQuestion + 1) / 10) * 100}%`;
     document.getElementById('question-counter').textContent = `Question ${currentQuestion + 1}/10`;
@@ -121,7 +210,20 @@ function selectAnswer(index) {
     document.getElementById('feedback-icon').textContent = index === question.correct ? '✅' : '❌';
     document.getElementById('feedback-text').textContent = index === question.correct ? 'Correct!' : `The answer was: ${question.options[question.correct]}`;
     
-    if (index === question.correct) score++;
+    const isCorrect = index === question.correct;
+    if (isCorrect) score++;
+    
+    // Store detailed result for this question
+    questionResults.push({
+        topic: question.topic,
+        text: question.text,
+        correct: isCorrect,
+        userAnswer: index,
+        correctAnswer: question.correct,
+        time: timeTaken,
+        userAnswerText: question.options[index],
+        correctAnswerText: question.options[question.correct]
+    });
     
     setTimeout(() => {
         currentQuestion++;
@@ -134,12 +236,28 @@ function selectAnswer(index) {
 }
 
 function showResults() {
+    // Save to history
+    const totalTime = times.reduce((a, b) => a + b, 0);
+    const avgTime = Math.round(totalTime / times.length);
+    
+    const quizData = {
+        grade: currentGrade,
+        score: score,
+        totalQuestions: 10,
+        totalTime: totalTime,
+        avgTime: avgTime,
+        questions: questionResults
+    };
+    
+    const sessionId = QuizHistory.save(quizData);
+    const stats = QuizHistory.getStats();
+    const weakTopics = QuizHistory.getWeakTopics(currentGrade);
+    
     showScreen('results');
     
+    // Update basic stats
     document.getElementById('final-score').textContent = score;
     document.getElementById('correct-count').textContent = score;
-    
-    const avgTime = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
     document.getElementById('avg-time').textContent = `${avgTime}s`;
     
     let rating = '😐';
@@ -149,6 +267,9 @@ function showResults() {
     else rating = '📚';
     
     document.getElementById('grade-rating').textContent = rating;
+    
+    // Build and show detailed summary
+    buildSummary(sessionId, stats, weakTopics, quizData);
 }
 
 function retakeQuiz() {
@@ -157,4 +278,119 @@ function retakeQuiz() {
 
 function changeGrade() {
     showScreen('landing');
+}
+
+function buildSummary(sessionId, stats, weakTopics, quizData) {
+    // Remove any existing summary
+    const existingSummary = document.getElementById('quiz-summary');
+    if (existingSummary) existingSummary.remove();
+    
+    const summaryDiv = document.createElement('div');
+    summaryDiv.id = 'quiz-summary';
+    summaryDiv.className = 'quiz-summary';
+    
+    // Build weak areas section
+    let weakAreasHTML = '';
+    if (weakTopics.length > 0) {
+        weakAreasHTML = `
+            <div class="summary-section weak-areas">
+                <h3>📚 Areas to Improve</h3>
+                <div class="weak-topics-grid">
+                    ${weakTopics.map(t => `
+                        <div class="weak-topic-card">
+                            <span class="topic-name">${t.topic}</span>
+                            <span class="topic-rate" style="color: ${t.rate < 50 ? '#ef4444' : '#f97316'}">${t.rate}%</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        `;
+    }
+    
+    // Build history comparison
+    let historyHTML = '';
+    if (stats && stats.totalQuizzes > 1) {
+        const prevScore = stats.lastQuiz && stats.lastQuiz.id !== sessionId ? 
+            Math.round((stats.lastQuiz.score / stats.lastQuiz.totalQuestions) * 100) : null;
+        const currScore = Math.round((score / 10) * 100);
+        const comparison = prevScore !== null ? (currScore > prevScore ? '📈' : currScore < prevScore ? '📉' : '➡️') : '';
+        
+        historyHTML = `
+            <div class="summary-section history-stats">
+                <h3>📊 Your Progress</h3>
+                <div class="stats-row">
+                    <div class="stat-mini">
+                        <span class="stat-num">${stats.totalQuizzes}</span>
+                        <span>Total Quizzes</span>
+                    </div>
+                    <div class="stat-mini">
+                        <span class="stat-num">${stats.avgScore}%</span>
+                        <span>Avg Score</span>
+                    </div>
+                    <div class="stat-mini">
+                        <span class="stat-num">${stats.bestScore}%</span>
+                        <span>Best Score</span>
+                    </div>
+                </div>
+                ${prevScore !== null ? `
+                    <div class="comparison-row">
+                        <span>Last quiz: ${prevScore}% <span class="arrow">${comparison}</span> Current: ${currScore}%</span>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+    
+    // Build question breakdown
+    const breakdownHTML = `
+        <div class="summary-section question-breakdown">
+            <h3>📝 Question Breakdown</h3>
+            <div class="question-list">
+                ${quizData.questions.map((q, i) => `
+                    <div class="q-item ${q.correct ? 'correct' : 'wrong'}">
+                        <div class="q-info">
+                            <span class="q-num">Q${i+1}</span>
+                            <span class="q-topic">${q.topic}</span>
+                            <span class="q-time">⏱️ ${q.time}s</span>
+                        </div>
+                        ${!q.correct ? `
+                            <div class="q-detail">
+                                <span>Your answer: ${q.userAnswerText}</span>
+                                <span class="correct-ans">✓ ${q.correctAnswerText}</span>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    
+    summaryDiv.innerHTML = `
+        <div class="summary-wrapper">
+            <div class="summary-header">
+                <h2>Quiz Summary</h2>
+                <span class="session-date">${new Date().toLocaleDateString()}</span>
+            </div>
+            ${historyHTML}
+            ${weakAreasHTML}
+            ${breakdownHTML}
+            <div class="summary-actions">
+                <button class="btn btn-secondary" onclick="viewHistory()">📜 View History</button>
+                <button class="btn" style="background: #ef4444; color: white;" onclick="clearHistory()">🗑️ Clear History</button>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('results').appendChild(summaryDiv);
+}
+
+function viewHistory() {
+    window.open('history.html', '_blank');
+}
+
+function clearHistory() {
+    if (confirm('Clear all quiz history? This cannot be undone.')) {
+        QuizHistory.clear();
+        document.getElementById('quiz-summary').remove();
+    }
 }

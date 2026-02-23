@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz History - Math Learning</title>
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        .history-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 1.5rem;
+        }
+        
+        .history-header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+        
+        .history-header h1 {
+            font-size: 1.75rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .back-link {
+            display: inline-block;
+            margin-top: 1rem;
+            color: var(--primary);
+            text-decoration: none;
+            font-weight: 600;
+        }
+        
+        .history-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .history-stat {
+            background: white;
+            padding: 1.25rem;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .history-stat .num {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+        
+        .history-stat .label {
+            font-size: 0.85rem;
+            color: var(--text-light);
+        }
+        
+        .history-table {
+            width: 100%;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+        }
+        
+        .history-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .history-table th,
+        .history-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        
+        .history-table th {
+            background: #f8fafc;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-transform: uppercase;
+        }
+        
+        .history-table tr:hover {
+            background: #f8fafc;
+            cursor: pointer;
+        }
+        
+        .grade-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+        
+        .grade-badge.grade-6 {
+            background: #fff7ed;
+            color: #f97316;
+        }
+        
+        .grade-badge.grade-7 {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+        
+        .score-bar {
+            height: 24px;
+            background: #e2e8f0;
+            border-radius: 12px;
+            overflow: hidden;
+            width: 100px;
+        }
+        
+        .score-bar-fill {
+            height: 100%;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: white;
+            transition: width 0.3s ease;
+        }
+        
+        .score-bar-fill.high { background: var(--success); }
+        .score-bar-fill.medium { background: var(--primary); }
+        .score-bar-fill.low { background: var(--error); }
+        
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-light);
+        }
+        
+        .empty-state .emoji {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+        }
+        
+        /* Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+            z-index: 100;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .modal-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .modal {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 90vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            transform: scale(0.9);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal-overlay.active .modal {
+            transform: scale(1);
+        }
+        
+        .modal-header {
+            padding: 1.5rem;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .modal-header h2 {
+            margin: 0;
+            font-size: 1.25rem;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+        
+        .modal-body {
+            padding: 1.5rem;
+            overflow-y: auto;
+        }
+        
+        .modal-questions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+        
+        .mq-item {
+            padding: 1rem;
+            border-radius: 8px;
+            border-left: 4px solid;
+        }
+        
+        .mq-item.correct {
+            background: #f0fdf4;
+            border-left-color: var(--success);
+        }
+        
+        .mq-item.wrong {
+            background: #fef2f2;
+            border-left-color: var(--error);
+        }
+        
+        .mq-header {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-bottom: 0.25rem;
+        }
+        
+        .mq-topic {
+            font-size: 0.75rem;
+            padding: 0.15rem 0.5rem;
+            background: rgba(0,0,0,0.05);
+            border-radius: 12px;
+        }
+        
+        .mq-time {
+            margin-left: auto;
+            font-size: 0.8rem;
+            color: var(--text-light);
+        }
+        
+        .mq-text {
+            font-weight: 500;
+        }
+        
+        @media (max-width: 600px) {
+            .history-table th,
+            .history-table td {
+                padding: 0.75rem;
+                font-size: 0.9rem;
+            }
+            
+            .score-bar {
+                width: 60px;
+                height: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="history-container">
+        <div class="history-header">
+            <h1>📜 Quiz History</h1>
+            <p>Your complete quiz journey</p>
+            <a href="index.html" class="back-link">← Back to Quiz</a>
+        </div>
+        
+        <div id="stats-container"></div>
+        <div id="history-table-container"></div>
+    </div>
+    
+    <div id="modal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <h2>📝 Quiz Details</h2>
+                <button class="modal-close" onclick="closeModal()">×</button>
+            </div>
+            <div class="modal-body" id="modal-content">
+                <!-- Content injected -->
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const STORAGE_KEY = 'mathQuiz_history';
+        
+        function getHistory() {
+            const data = localStorage.getItem(STORAGE_KEY);
+            return data ? JSON.parse(data) : [];
+        }
+        
+        function formatDate(isoString) {
+            const date = new Date(isoString);
+            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        
+        function getStats(history) {
+            if (history.length === 0) return null;
+            
+            const scores = history.map(h => (h.score / h.totalQuestions) * 100);
+            const grade6 = history.filter(h => h.grade === 6);
+            const grade7 = history.filter(h => h.grade === 7);
+            
+            return {
+                total: history.length,
+                avgScore: (scores.reduce((a, b) => a + b, 0) / scores.length).toFixed(1),
+                bestScore: Math.max(...scores).toFixed(0),
+                grade6Score: grade6.length > 0 ? 
+                    (grade6.map(h => (h.score/h.totalQuestions)*100).reduce((a,b)=>a+b,0)/grade6.length).toFixed(1) : 0,
+                grade7Score: grade7.length > 0 ? 
+                    (grade7.map(h => (h.score/h.totalQuestions)*100).reduce((a,b)=>a+b,0)/grade7.length).toFixed(1) : 0
+            };
+        }
+        
+        function renderStats() {
+            const history = getHistory();
+            const stats = getStats(history);
+            const container = document.getElementById('stats-container');
+            
+            if (!stats) {
+                container.innerHTML = '';
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="history-stats">
+                    <div class="history-stat">
+                        <div class="num">${stats.total}</div>
+                        <div class="label">Total Quizzes</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="num">${stats.avgScore}%</div>
+                        <div class="label">Average Score</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="num">${stats.bestScore}%</div>
+                        <div class="label">Best Score</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="num">${stats.grade6Score}%</div>
+                        <div class="label">6th Grade Avg</div>
+                    </div>
+                    <div class="history-stat">
+                        <div class="num">${stats.grade7Score}%</div>
+                        <div class="label">7th Grade Avg</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function renderHistoryTable() {
+            const history = getHistory();
+            const container = document.getElementById('history-table-container');
+            
+            if (history.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <div class="emoji">📚</div>
+                        <h2>No quizzes yet</h2>
+                        <p>Take your first quiz to see your history here!</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = `
+                <div class="history-table">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Grade</th>
+                                <th>Score</th>
+                                <th>Avg Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${history.map((h, i) => {
+                                const pct = Math.round((h.score / h.totalQuestions) * 100);
+                                const barClass = pct >= 80 ? 'high' : pct >= 60 ? 'medium' : 'low';
+                                return `
+                                    <tr onclick="showDetails(${i})">
+                                        <td>${formatDate(h.date)}</td>
+                                        <td><span class="grade-badge grade-${h.grade}">${h.grade}th Grade</span></td>
+                                        <td>
+                                            <div class="score-bar">
+                                                <div class="score-bar-fill ${barClass}" style="width: ${pct}%">
+                                                    ${pct}%
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>${h.avgTime}s</td>
+                                    </tr>
+                                `;
+                            }).join('')}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+        
+        function showDetails(index) {
+            const history = getHistory();
+            const quiz = history[index];
+            const modal = document.getElementById('modal');
+            const content = document.getElementById('modal-content');
+            
+            content.innerHTML = `
+                <div class="modal-questions">
+                    ${quiz.questions.map((q, i) => `
+                        <div class="mq-item ${q.correct ? 'correct' : 'wrong'}">
+                            <div class="mq-header">
+                                <span>Q${i+1}</span>
+                                <span class="mq-topic">${q.topic}</span>
+                                <span class="mq-time">⏱️ ${q.time}s</span>
+                            </div>
+                            <div class="mq-text">${q.text}</div>
+                            ${!q.correct ? `
+                                <div style="margin-top: 0.5rem; font-size: 0.85rem; color: #ef4444;">
+                                    You answered: ${q.userAnswerText || 'N/A'}
+                                </div>
+                                <div style="font-size: 0.85rem; color: #22c55e;">
+                                    ✓ Correct: ${q.correctAnswerText}
+                                </div>
+                            ` : ''}
+                        </div>
+                    `).join('')}
+                </div>
+            `;
+            
+            modal.classList.add('active');
+        }
+        
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+        
+        // Close modal on outside click
+        document.getElementById('modal').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('modal')) closeModal();
+        });
+        
+        // Initialize
+        renderStats();
+        renderHistoryTable();
+    </script>
+</body>
+</html>
