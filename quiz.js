@@ -1,252 +1,160 @@
-// Quiz State Management
-const quizState = {
-    timers: {},          // Store timer intervals
-    startTimes: {},      // Store when each question timer started
-    timesTaken: {},      // Store time taken for each question
-    answered: {},        // Track which questions have been answered
-    scores: {},          // Track correct/incorrect answers
-    totalQuestions: 6
+// Question Banks
+const questions = {
+    6: [
+        { topic: 'Ratios', text: 'If 3 apples cost $1.20, how much would 6 apples cost?', options: ['$1.80', '$2.40', '$3.60', '$0.60'], correct: 1 },
+        { topic: 'Ratios', text: 'A recipe calls for 2 cups of flour for every 3 cups of sugar. How many cups of flour for 9 cups of sugar?', options: ['4 cups', '5 cups', '6 cups', '8 cups'], correct: 2 },
+        { topic: 'Fractions', text: 'What is 3/4 ÷ 1/2?', options: ['3/8', '1 1/2', '2/3', '3/2'], correct: 1 },
+        { topic: 'Fractions', text: 'Simplify: 12/18', options: ['2/3', '3/4', '4/6', '6/9'], correct: 0 },
+        { topic: 'Decimals', text: 'What is 0.4 × 0.5?', options: ['0.02', '0.2', '2.0', '0.9'], correct: 1 },
+        { topic: 'Exponents', text: 'What is 2³?', options: ['6', '8', '9', '16'], correct: 1 },
+        { topic: 'Area', text: 'Find the area of a rectangle with length 8 and width 5.', options: ['13', '26', '40', '45'], correct: 2 },
+        { topic: 'Mean', text: 'Find the mean: 5, 8, 12, 3, 7', options: ['6', '7', '8', '9'], correct: 1 },
+        { topic: 'Percent', text: 'What is 25% of 80?', options: ['15', '20', '25', '30'], correct: 1 },
+        { topic: 'Equations', text: 'Solve: x + 5 = 12', options: ['5', '6', '7', '8'], correct: 2 }
+    ],
+    7: [
+        { topic: 'Proportions', text: 'If 4 workers build a wall in 6 days, how long for 3 workers?', options: ['8 days', '7 days', '9 days', '5 days'], correct: 0 },
+        { topic: 'Percent', text: 'A shirt costs $40 and is 25% off. What is the sale price?', options: ['$30', '$35', '$32', '$28'], correct: 1 },
+        { topic: 'Integers', text: 'What is (-5) × (-4)?', options: ['-20', '20', '-9', '9'], correct: 1 },
+        { topic: 'Integers', text: 'What is 8 + (-12)?', options: ['-20', '20', '-4', '4'], correct: 2 },
+        { topic: 'Probability', text: 'A coin is flipped 3 times. What is P(3 heads)?', options: ['1/8', '1/6', '1/4', '1/2'], correct: 0 },
+        { topic: 'Probability', text: 'What is the probability of rolling a 6 on a die?', options: ['1/3', '1/4', '1/6', '1/12'], correct: 2 },
+        { topic: 'Expressions', text: 'Simplify: 3x + 5x - 2x', options: ['5x', '6x', '8x', '10x'], correct: 1 },
+        { topic: 'Equations', text: 'Solve: 2x + 3 = 11', options: ['3', '4', '5', '7'], correct: 1 },
+        { topic: 'Integers', text: 'What is (-15) ÷ 3?', options: ['-5', '5', '-12', '12'], correct: 0 },
+        { topic: 'Angles', text: 'Two angles are supplementary. One is 85°. What is the other?', options: ['85°', '95°', '90°', '105°'], correct: 1 }
+    ]
 };
 
-// Initialize quiz when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    initializeQuiz();
-});
+// State
+let currentGrade = 6;
+let currentQuestions = [];
+let currentQuestion = 0;
+let score = 0;
+let startTime = 0;
+let times = [];
+let answered = false;
 
-function initializeQuiz() {
-    const quizCards = document.querySelectorAll('.quiz-card');
-    
-    quizCards.forEach(card => {
-        const questionNum = card.dataset.question;
-        const options = card.querySelectorAll('.option-btn');
-        
-        options.forEach(btn => {
-            btn.addEventListener('click', () => handleAnswer(questionNum, btn));
-        });
-        
-        // Add click listener to start timer on the card
-        card.addEventListener('click', function(e) {
-            if (!quizState.startTimes[questionNum] && !quizState.answered[questionNum]) {
-                startTimer(questionNum);
-            }
-        }, { once: true });
-    });
+// Screens
+const screens = {
+    landing: document.getElementById('landing'),
+    quiz: document.getElementById('quiz'),
+    results: document.getElementById('results')
+};
+
+function showScreen(name) {
+    Object.values(screens).forEach(s => s.classList.remove('active'));
+    screens[name].classList.add('active');
 }
 
-function startTimer(questionNum) {
-    const timerElement = document.getElementById(`timer-${questionNum}`);
-    quizState.startTimes[questionNum] = Date.now();
+function startQuiz(grade) {
+    currentGrade = grade;
+    currentQuestions = [...questions[grade]].sort(() => Math.random() - 0.5);
+    currentQuestion = 0;
+    score = 0;
+    times = [];
     
-    timerElement.classList.add('running');
-    timerElement.textContent = '⏱️ 0:00';
+    document.documentElement.style.setProperty('--primary', grade === 6 ? '#f97316' : '#10b981');
+    document.documentElement.style.setProperty('--primary-dark', grade === 6 ? '#ea580c' : '#059669');
     
-    // Update timer every second
-    quizState.timers[questionNum] = setInterval(() => {
-        const elapsed = Math.floor((Date.now() - quizState.startTimes[questionNum]) / 1000);
-        const minutes = Math.floor(elapsed / 60);
-        const seconds = elapsed % 60;
-        timerElement.textContent = `⏱️ ${minutes}:${seconds.toString().padStart(2, '0')}`;
+    showScreen('quiz');
+    loadQuestion();
+}
+
+function loadQuestion() {
+    answered = false;
+    const q = currentQuestions[currentQuestion];
+    startTime = Date.now();
+    
+    document.getElementById('progress').style.width = `${((currentQuestion + 1) / 10) * 100}%`;
+    document.getElementById('question-counter').textContent = `Question ${currentQuestion + 1}/10`;
+    document.getElementById('timer').textContent = '⏱️ 00:00';
+    document.getElementById('topic-tag').textContent = q.topic;
+    document.getElementById('question-text').textContent = q.text;
+    
+    const optionsDiv = document.getElementById('options');
+    optionsDiv.innerHTML = '';
+    
+    q.options.forEach((opt, i) => {
+        const btn = document.createElement('button');
+        btn.className = 'option-btn';
+        btn.textContent = opt;
+        btn.onclick = () => selectAnswer(i);
+        optionsDiv.appendChild(btn);
+    });
+    
+    document.getElementById('feedback').className = 'feedback hidden';
+    
+    startTimer();
+}
+
+let timerInterval;
+function startTimer() {
+    clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+        if (answered) return;
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const mins = Math.floor(elapsed / 60).toString().padStart(2, '0');
+        const secs = (elapsed % 60).toString().padStart(2, '0');
+        document.getElementById('timer').textContent = `⏱️ ${mins}:${secs}`;
     }, 1000);
 }
 
-function stopTimer(questionNum) {
-    if (quizState.timers[questionNum]) {
-        clearInterval(quizState.timers[questionNum]);
-        delete quizState.timers[questionNum];
-    }
+function selectAnswer(index) {
+    if (answered) return;
+    answered = true;
+    clearInterval(timerInterval);
     
-    // Calculate time taken
-    const endTime = Date.now();
-    const timeTaken = Math.round((endTime - quizState.startTimes[questionNum]) / 1000);
-    quizState.timesTaken[questionNum] = timeTaken;
+    const question = currentQuestions[currentQuestion];
+    const options = document.querySelectorAll('.option-btn');
+    const timeTaken = Math.floor((Date.now() - startTime) / 1000);
+    times.push(timeTaken);
     
-    return timeTaken;
-}
-
-function handleAnswer(questionNum, selectedBtn) {
-    // Prevent answering if already answered
-    if (quizState.answered[questionNum]) {
-        return;
-    }
-    
-    // Mark as answered
-    quizState.answered[questionNum] = true;
-    
-    // Stop timer
-    const timeTaken = stopTimer(questionNum);
-    
-    // Get correct answer
-    const card = document.querySelector(`.quiz-card[data-question="${questionNum}"]`);
-    const correctAnswer = card.dataset.answer;
-    const selectedAnswer = selectedBtn.dataset.value;
-    
-    // Check if correct
-    const isCorrect = selectedAnswer === correctAnswer;
-    quizState.scores[questionNum] = isCorrect;
-    
-    // Update UI
-    const allBtns = card.querySelectorAll('.option-btn');
-    allBtns.forEach(btn => {
-        btn.disabled = true; // Disable all buttons
-        
-        // Mark correct answer
-        if (btn.dataset.value === correctAnswer) {
-            btn.classList.add('correct');
-        }
-        // Mark wrong selection
-        if (btn === selectedBtn && !isCorrect) {
-            btn.classList.add('wrong');
-        }
+    options.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === question.correct) btn.classList.add('correct');
+        if (i === index && i !== question.correct) btn.classList.add('wrong');
     });
     
-    // Update card styling
-    card.classList.add('answered');
-    if (isCorrect) {
-        card.classList.add('correct-answer');
-    } else {
-        card.classList.add('wrong-answer');
-    }
+    const feedback = document.getElementById('feedback');
+    feedback.className = `feedback ${index === question.correct ? 'correct' : 'wrong'}`;
+    document.getElementById('feedback-icon').textContent = index === question.correct ? '✅' : '❌';
+    document.getElementById('feedback-text').textContent = index === question.correct ? 'Correct!' : `The answer was: ${question.options[question.correct]}`;
     
-    // Show result icon
-    const resultArea = document.getElementById(`result-${questionNum}`);
-    resultArea.innerHTML = isCorrect 
-        ? '<span class="icon">✅</span>'
-        : '<span class="icon">❌</span>';
+    if (index === question.correct) score++;
     
-    // Show time taken
-    const timeDisplay = document.getElementById(`time-${questionNum}`);
-    const minutes = Math.floor(timeTaken / 60);
-    const seconds = timeTaken % 60;
-    const timeText = minutes > 0 
-        ? `Time: ${minutes}m ${seconds}s`
-        : `Time: ${seconds}s`;
-    timeDisplay.textContent = timeText;
-    
-    // Update score display
-    updateScoreDisplay();
-    
-    // Check if quiz is complete
-    checkQuizComplete();
+    setTimeout(() => {
+        currentQuestion++;
+        if (currentQuestion < 10) {
+            loadQuestion();
+        } else {
+            showResults();
+        }
+    }, 1500);
 }
 
-function updateScoreDisplay() {
-    const correctCount = Object.values(quizState.scores).filter(s => s).length;
-    document.getElementById('score-display').textContent = `${correctCount}/6`;
+function showResults() {
+    showScreen('results');
     
-    // Calculate average time bonus
-    const times = Object.values(quizState.timesTaken);
-    if (times.length > 0) {
-        const avgTime = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
-        const avgMinutes = Math.floor(avgTime / 60);
-        const avgSeconds = avgTime % 60;
-        document.getElementById('time-bonus').textContent = 
-            avgMinutes > 0 ? `${avgMinutes}m ${avgSeconds}s avg` : `${avgSeconds}s avg`;
-    }
+    document.getElementById('final-score').textContent = score;
+    document.getElementById('correct-count').textContent = score;
+    
+    const avgTime = Math.round(times.reduce((a, b) => a + b, 0) / times.length);
+    document.getElementById('avg-time').textContent = `${avgTime}s`;
+    
+    let rating = '😐';
+    if (score >= 9) rating = '⭐⭐⭐';
+    else if (score >= 7) rating = '⭐⭐';
+    else if (score >= 5) rating = '⭐';
+    else rating = '📚';
+    
+    document.getElementById('grade-rating').textContent = rating;
 }
 
-function checkQuizComplete() {
-    const answeredCount = Object.keys(quizState.answered).length;
-    
-    if (answeredCount === quizState.totalQuestions) {
-        showQuizSummary();
-    }
+function retakeQuiz() {
+    startQuiz(currentGrade);
 }
 
-function showQuizSummary() {
-    const correctCount = Object.values(quizState.scores).filter(s => s).length;
-    const times = Object.values(quizState.timesTaken);
-    const totalTime = times.reduce((a, b) => a + b, 0);
-    const avgTime = Math.round(totalTime / times.length);
-    
-    const summary = document.getElementById('quiz-summary');
-    const finalScore = document.getElementById('final-score');
-    const avgTimeDisplay = document.getElementById('avg-time');
-    
-    // Determine message based on score
-    let message = '';
-    if (correctCount === 6) {
-        message = '🏆 Perfect Score! Amazing job!';
-    } else if (correctCount >= 4) {
-        message = '👏 Great work! Keep it up!';
-    } else if (correctCount >= 2) {
-        message = '💪 Good effort! Practice makes perfect!';
-    } else {
-        message = '📚 Keep practicing! You\'ll get there!';
-    }
-    
-    finalScore.textContent = `${message} You got ${correctCount}/6 correct!`;
-    
-    const avgMinutes = Math.floor(avgTime / 60);
-    const avgSeconds = avgTime % 60;
-    avgTimeDisplay.textContent = `Average time per question: ${avgMinutes > 0 ? avgMinutes + 'm ' : ''}${avgSeconds}s`;
-    
-    summary.style.display = 'block';
-    
-    // Scroll to summary
-    summary.scrollIntoView({ behavior: 'smooth', block: 'center' });
-}
-
-function resetQuiz() {
-    // Clear all timers
-    Object.values(quizState.timers).forEach(timer => clearInterval(timer));
-    
-    // Reset state
-    quizState.timers = {};
-    quizState.startTimes = {};
-    quizState.timesTaken = {};
-    quizState.answered = {};
-    quizState.scores = {};
-    
-    // Reset UI
-    const quizCards = document.querySelectorAll('.quiz-card');
-    quizCards.forEach(card => {
-        const questionNum = card.dataset.question;
-        
-        // Remove classes
-        card.classList.remove('answered', 'correct-answer', 'wrong-answer');
-        
-        // Reset timer
-        const timer = document.getElementById(`timer-${questionNum}`);
-        timer.textContent = '⏱️ Click to start';
-        timer.classList.remove('running');
-        
-        // Reset buttons
-        const buttons = card.querySelectorAll('.option-btn');
-        buttons.forEach(btn => {
-            btn.disabled = false;
-            btn.classList.remove('correct', 'wrong');
-        });
-        
-        // Clear results
-        document.getElementById(`result-${questionNum}`).innerHTML = '';
-        document.getElementById(`time-${questionNum}`).textContent = '';
-    });
-    
-    // Reset stats
-    document.getElementById('score-display').textContent = '0/6';
-    document.getElementById('time-bonus').textContent = '-';
-    document.getElementById('quiz-summary').style.display = 'none';
-    
-    // Re-initialize quiz
-    initializeQuiz();
-    
-    // Scroll to top of quiz
-    document.getElementById('daily-quiz').scrollIntoView({ behavior: 'smooth' });
-}
-
-// Check for saved quiz progress in localStorage (optional feature)
-function saveProgress() {
-    localStorage.setItem('mathQuizProgress', JSON.stringify({
-        answered: quizState.answered,
-        scores: quizState.scores,
-        timesTaken: quizState.timesTaken
-    }));
-}
-
-function loadProgress() {
-    const saved = localStorage.getItem('mathQuizProgress');
-    if (saved) {
-        const data = JSON.parse(saved);
-        // Could restore progress here if desired
-    }
+function changeGrade() {
+    showScreen('landing');
 }

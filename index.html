@@ -3,255 +3,94 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Math Learning - Fremont Students</title>
+    <title>Math Quiz - Fremont Students</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-    <header>
-        <h1>🧮 Math Learning Hub</h1>
-        <p class="subtitle">For 6th & 7th Grade Students in Fremont, CA</p>
-    </header>
-
-    <nav>
-        <a href="#daily-quiz" class="nav-btn quiz-btn">🎯 Daily Quiz</a>
-        <a href="#grade6" class="nav-btn grade6">6th Grade</a>
-        <a href="#grade7" class="nav-btn grade7">7th Grade</a>
-        <a href="#resources" class="nav-btn">Resources</a>
-    </nav>
-
-    <main>
-        <!-- Daily Quiz Section -->
-        <section id="daily-quiz" class="quiz-section">
-            <h2>🎯 Daily Quiz - 6 Questions</h2>
-            <p class="quiz-intro">Test your skills! Click a question to start the timer. You can only answer once per question.</p>
+    <div class="container">
+        <!-- Landing Screen -->
+        <div id="landing" class="screen active">
+            <div class="logo">🎯</div>
+            <h1>Math Quiz Challenge</h1>
+            <p class="subtitle">Test your skills. Race the clock. Beat your score.</p>
             
-            <div class="quiz-stats">
-                <div class="stat-box">
-                    <span class="stat-label">Score:</span>
-                    <span id="score-display">0/6</span>
+            <div class="grade-select">
+                <p>Select your grade:</p>
+                <div class="grade-buttons">
+                    <button class="grade-btn" onclick="startQuiz(6)">
+                        <span class="grade-label">6th Grade</span>
+                        <span class="grade-desc">Ratios, Fractions, Variables</span>
+                    </button>
+                    <button class="grade-btn grade7" onclick="startQuiz(7)">
+                        <span class="grade-label">7th Grade</span>
+                        <span class="grade-desc">Proportions, Integers, Probability</span>
+                    </button>
                 </div>
-                <div class="stat-box">
-                    <span class="stat-label">Time Bonus:</span>
-                    <span id="time-bonus">-</span>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div id="quiz" class="screen">
+            <div class="quiz-header">
+                <div class="progress-bar">
+                    <div id="progress" class="progress-fill"></div>
+                </div>
+                <div class="quiz-stats">
+                    <span id="question-counter">Question 1/10</span>
+                    <span id="timer">⏱️ 00:00</span>
                 </div>
             </div>
 
-            <div class="quiz-grid" id="quiz-container">
-                <!-- Question 1: Ratios & Rates -->
-                <div class="quiz-card" data-question="1" data-answer="24">
-                    <div class="question-header">
-                        <span class="question-number">Q1</span>
-                        <span class="topic-tag">Ratios & Rates</span>
-                        <span class="timer" id="timer-1">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">If 3 apples cost $1.20, how much would 6 apples cost?</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="1.80">$1.80</button>
-                        <button class="option-btn" data-value="2.40">$2.40</button>
-                        <button class="option-btn" data-value="3.60">$3.60</button>
-                        <button class="option-btn" data-value="2.00">$2.00</button>
-                    </div>
-                    <div class="result-area" id="result-1"></div>
-                    <div class="time-taken" id="time-1"></div>
+            <div class="question-container">
+                <div id="question-box">
+                    <span id="topic-tag" class="topic-tag">Ratios</span>
+                    <h2 id="question-text">Loading...</h2>
                 </div>
-
-                <!-- Question 2: Fractions -->
-                <div class="quiz-card" data-question="2" data-answer="3/8">
-                    <div class="question-header">
-                        <span class="question-number">Q2</span>
-                        <span class="topic-tag">Fractions</span>
-                        <span class="timer" id="timer-2">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">What is ¾ × ½?</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="3/8">3/8</button>
-                        <button class="option-btn" data-value="1/2">1/2</button>
-                        <button class="option-btn" data-value="3/4">3/4</button>
-                        <button class="option-btn" data-value="1">1</button>
-                    </div>
-                    <div class="result-area" id="result-2"></div>
-                    <div class="time-taken" id="time-2"></div>
-                </div>
-
-                <!-- Question 3: Equations -->
-                <div class="quiz-card" data-question="3" data-answer="7">
-                    <div class="question-header">
-                        <span class="question-number">Q3</span>
-                        <span class="topic-tag">Equations</span>
-                        <span class="timer" id="timer-3">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">Solve for x: 2x + 5 = 19</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="5">5</button>
-                        <button class="option-btn" data-value="6">6</button>
-                        <button class="option-btn" data-value="7">7</button>
-                        <button class="option-btn" data-value="8">8</button>
-                    </div>
-                    <div class="result-area" id="result-3"></div>
-                    <div class="time-taken" id="time-3"></div>
-                </div>
-
-                <!-- Question 4: Percentages -->
-                <div class="quiz-card" data-question="4" data-answer="15">
-                    <div class="question-header">
-                        <span class="question-number">Q4</span>
-                        <span class="topic-tag">Percentages</span>
-                        <span class="timer" id="timer-4">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">What is 25% of 60?</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="10">10</button>
-                        <button class="option-btn" data-value="12">12</button>
-                        <button class="option-btn" data-value="15">15</button>
-                        <button class="option-btn" data-value="20">20</button>
-                    </div>
-                    <div class="result-area" id="result-4"></div>
-                    <div class="time-taken" id="time-4"></div>
-                </div>
-
-                <!-- Question 5: Integers -->
-                <div class="quiz-card" data-question="5" data-answer="-8">
-                    <div class="question-header">
-                        <span class="question-number">Q5</span>
-                        <span class="topic-tag">Integers</span>
-                        <span class="timer" id="timer-5">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">Calculate: (-12) + 4 = ?</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="-16">-16</button>
-                        <button class="option-btn" data-value="-8">-8</button>
-                        <button class="option-btn" data-value="8">8</button>
-                        <button class="option-btn" data-value="16">16</button>
-                    </div>
-                    <div class="result-area" id="result-5"></div>
-                    <div class="time-taken" id="time-5"></div>
-                </div>
-
-                <!-- Question 6: Statistics -->
-                <div class="quiz-card" data-question="6" data-answer="15">
-                    <div class="question-header">
-                        <span class="question-number">Q6</span>
-                        <span class="topic-tag">Statistics</span>
-                        <span class="timer" id="timer-6">⏱️ Click to start</span>
-                    </div>
-                    <p class="question-text">Find the mean: 10, 15, 20, 10, 20</p>
-                    <div class="options">
-                        <button class="option-btn" data-value="12">12</button>
-                        <button class="option-btn" data-value="14">14</button>
-                        <button class="option-btn" data-value="15">15</button>
-                        <button class="option-btn" data-value="20">20</button>
-                    </div>
-                    <div class="result-area" id="result-6"></div>
-                    <div class="time-taken" id="time-6"></div>
+                
+                <div id="options" class="options-grid">
+                    <!-- Options injected by JS -->
                 </div>
             </div>
 
-            <div class="quiz-summary" id="quiz-summary" style="display: none;">
-                <h3>Quiz Complete! 🎉</h3>
-                <p id="final-score"></p>
-                <p id="avg-time"></p>
-                <button class="reset-btn" onclick="resetQuiz()">Try Again</button>
+            <div id="feedback" class="feedback hidden">
+                <span id="feedback-icon"></span>
+                <p id="feedback-text"></p>
             </div>
-        </section>
+        </div>
 
-        <section id="grade6" class="grade-section">
-            <h2>6th Grade Math Topics</h2>
-            <div class="topic-grid">
-                <div class="topic-card">
-                    <h3>📊 Ratios & Rates</h3>
-                    <ul>
-                        <li>Understanding ratios</li>
-                        <li>Unit rates</li>
-                        <li>Equivalent ratios</li>
-                        <li>Ratio tables</li>
-                    </ul>
+        <!-- Results Screen -->
+        <div id="results" class="screen">
+            <div class="results-header">
+                <div class="trophy">🏆</div>
+                <h2>Quiz Complete!</h2>
+            </div>
+
+            <div class="score-circle">
+                <span id="final-score">0</span>
+                <small>/10</small>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat">
+                    <span class="stat-value" id="correct-count">0</span>
+                    <span class="stat-label">Correct</span>
                 </div>
-                <div class="topic-card">
-                    <h3>🔢 Number Systems</h3>
-                    <ul>
-                        <li>Dividing fractions</li>
-                        <li>Multiplying fractions</li>
-                        <li>Long division</li>
-                        <li>Decimal operations</li>
-                    </ul>
+                <div class="stat">
+                    <span class="stat-value" id="avg-time">0s</span>
+                    <span class="stat-label">Avg Time</span>
                 </div>
-                <div class="topic-card">
-                    <h3>📐 Expressions & Equations</h3>
-                    <ul>
-                        <li>Exponents</li>
-                        <li>Order of operations</li>
-                        <li>Variables</li>
-                        <li>One-step equations</li>
-                    </ul>
-                </div>
-                <div class="topic-card">
-                    <h3>🎯 Data & Statistics</h3>
-                    <ul>
-                        <li>Statistical questions</li>
-                        <li>Mean, median, mode</li>
-                        <li>Range & IQR</li>
-                        <li>Box plots</li>
-                    </ul>
+                <div class="stat">
+                    <span class="stat-value" id="grade-rating">-</span>
+                    <span class="stat-label">Rating</span>
                 </div>
             </div>
-        </section>
 
-        <section id="grade7" class="grade-section">
-            <h2>7th Grade Math Topics</h2>
-            <div class="topic-grid">
-                <div class="topic-card">
-                    <h3>⚖️ Proportional Relationships</h3>
-                    <ul>
-                        <li>Proportions</li>
-                        <li>Constant of proportionality</li>
-                        <li>Percent problems</li>
-                        <li>Scale drawings</li>
-                    </ul>
-                </div>
-                <div class="topic-card">
-                    <h3>🔢 Rational Numbers</h3>
-                    <ul>
-                        <li>Negative numbers</li>
-                        <li>Adding & subtracting integers</li>
-                        <li>Multiplying & dividing integers</li>
-                        <li>Rational number operations</li>
-                    </ul>
-                </div>
-                <div class="topic-card">
-                    <h3>📝 Expressions with Variables</h3>
-                    <ul>
-                        <li>Combining like terms</li>
-                        <li>Distributive property</li>
-                        <li>Two-step equations</li>
-                        <li>Inequalities</li>
-                    </ul>
-                </div>
-                <div class="topic-card">
-                    <h3>📊 Probability & Stats</h3>
-                    <ul>
-                        <li>Simple probability</li>
-                        <li>Compound events</li>
-                        <li>Random sampling</li>
-                        <li>Comparing populations</li>
-                    </ul>
-                </div>
+            <div class="result-actions">
+                <button class="btn btn-primary" onclick="retakeQuiz()">↻ Try Again</button>
+                <button class="btn btn-secondary" onclick="changeGrade()">← Change Grade</button>
             </div>
-        </section>
-
-        <section id="resources" class="resources-section">
-            <h2>🎓 Study Resources</h2>
-            <div class="resource-grid">
-                <a href="#" class="resource-link">Khan Academy</a>
-                <a href="#" class="resource-link">Practice Worksheets</a>
-                <a href="#" class="resource-link">Video Tutorials</a>
-                <a href="#" class="resource-link">California Standards</a>
-            </div>
-        </section>
-    </main>
-
-    <footer>
-        <p>Made for Fremont Unified School District students • Aligns with CA Common Core Standards</p>
-    </footer>
+        </div>
+    </div>
 
     <script src="quiz.js"></script>
 </body>

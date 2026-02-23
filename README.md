@@ -1,42 +1,37 @@
-# Math Learning Hub
+# Math Quiz for Fremont Students
 
-A simple, clean website for 6th and 7th grade math students in Fremont, CA.
+A fast, interactive math quiz for 6th and 7th grade students in Fremont, CA.
 
-## Purpose
+## 🎯 Live Site
 
-This site provides:
-- Curated math topics aligned with California Common Core standards
-- Grade-specific resources for 6th and 7th graders
-- Quick reference for students in Fremont Unified School District
+**<https://learnmv.github.io/math-fremont-learning/>**
 
-## Live Site
+## Features
 
-🌐 **<https://learnmv.github.io/math-fremont-learning>**
+- **10 questions per session** – Randomized each time
+- **Timed** – Track your speed
+- **Grade-specific** – 6th or 7th grade topics
+- **Instant feedback** – See correct answers immediately
+- **Score tracking** – Results + rating at the end
 
-## Topics Covered
+## Topics
 
-### 6th Grade
-- Ratios & Rates
-- Number Systems (fractions, decimals)
-- Expressions & Equations
-- Data & Statistics
+**6th Grade:** Ratios, Fractions, Decimals, Exponents, Area, Mean, Percent, Equations
 
-### 7th Grade
-- Proportional Relationships
-- Rational Numbers (integers)
-- Expressions with Variables
-- Probability & Statistics
+**7th Grade:** Proportions, Percent, Integers, Probability, Expressions, Equations, Angles
 
-## Tech Stack
+## How to Use
 
-- HTML5
-- CSS3 (no frameworks, pure vanilla)
-- GitHub Pages for hosting
+1. Pick your grade
+2. Click to start
+3. Select your answer
+4. See your results + rating
 
-## Development
+## Tech
 
-To run locally, just open `index.html` in any browser.
+- Vanilla HTML/CSS/JS
+- GitHub Pages hosting
 
 ---
 
-Made with 🌌 for Fremont students
+Made for Fremont middle schoolers 🧮
