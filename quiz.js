@@ -75,7 +75,7 @@ const QuizHistory = {
                 rate: (stats.correct / stats.total * 100).toFixed(0),
                 accuracy: (stats.correct / stats.total * 100).toFixed(1)
             }))
-            .sort((a, b) => a.rate - b.rate) &>
+            .sort((a, b) => a.rate - b.rate)
             .slice(0, 3); // Top 3 weak areas
     },
     
@@ -151,6 +151,7 @@ function startQuiz(grade) {
 
 function loadQuestion() {
     answered = false;
+    selectedOptionIndex = -1;
     const q = currentQuestions[currentQuestion];
     startTime = Date.now();
     window.currentQuestionData = q; // Store for result tracking
@@ -168,9 +169,16 @@ function loadQuestion() {
         const btn = document.createElement('button');
         btn.className = 'option-btn';
         btn.textContent = opt;
+        btn.setAttribute('aria-label', `Option ${i + 1}: ${opt}`);
         btn.onclick = () => selectAnswer(i);
         optionsDiv.appendChild(btn);
     });
+    
+    // Remove Next button for new question
+    document.getElementById('next-btn')?.remove();
+    
+    // Focus first option for accessibility
+    document.querySelector('.option-btn')?.focus();
     
     document.getElementById('feedback').className = 'feedback hidden';
     
@@ -178,6 +186,8 @@ function loadQuestion() {
 }
 
 let timerInterval;
+let selectedOptionIndex = -1;
+
 function startTimer() {
     clearInterval(timerInterval);
     timerInterval = setInterval(() => {
@@ -187,6 +197,42 @@ function startTimer() {
         const secs = (elapsed % 60).toString().padStart(2, '0');
         document.getElementById('timer').textContent = `⏱️ ${mins}:${secs}`;
     }, 1000);
+}
+
+// Keyboard support
+document.addEventListener('keydown', (e) => {
+    if (!screens.quiz.classList.contains('active')) return;
+    
+    if (e.key === 'Enter') {
+        e.preventDefault();
+        if (selectedOptionIndex !== -1 && !answered) {
+            selectAnswer(selectedOptionIndex);
+        } else if (answered && document.getElementById('next-btn')) {
+            document.getElementById('next-btn').click();
+        }
+    } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        selectOptionByIndex(Math.max(0, selectedOptionIndex - 1));
+    } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        const optionCount = document.querySelectorAll('.option-btn').length;
+        selectOptionByIndex(Math.min(optionCount - 1, selectedOptionIndex + 1));
+    } else if (!isNaN(e.key) && e.key !== ' ') {
+        const num = parseInt(e.key) - 1;
+        if (num >= 0 && num < document.querySelectorAll('.option-btn').length) {
+            e.preventDefault();
+            selectOptionByIndex(num);
+        }
+    }
+});
+
+function selectOptionByIndex(index) {
+    selectedOptionIndex = index;
+    const options = document.querySelectorAll('.option-btn');
+    options.forEach((btn, i) => {
+        btn.classList.toggle('focused', i === index);
+    });
+    options[index]?.focus();
 }
 
 function selectAnswer(index) {
@@ -225,14 +271,25 @@ function selectAnswer(index) {
         correctAnswerText: question.options[question.correct]
     });
     
-    setTimeout(() => {
-        currentQuestion++;
-        if (currentQuestion < 10) {
+    // Show Next button instead of auto-advancing
+    const nextBtn = document.createElement('button');
+    nextBtn.id = 'next-btn';
+    nextBtn.className = 'btn btn-primary';
+    nextBtn.style.marginTop = '1rem';
+    nextBtn.setAttribute('aria-label', 'Continue to next question');
+    
+    if (currentQuestion < 9) {
+        nextBtn.textContent = '→ Next Question';
+        nextBtn.onclick = () => {
+            currentQuestion++;
             loadQuestion();
-        } else {
-            showResults();
-        }
-    }, 1500);
+        };
+    } else {
+        nextBtn.textContent = '✓ See Results';
+        nextBtn.onclick = () => showResults();
+    }
+    
+    document.querySelector('.question-container').appendChild(nextBtn);
 }
 
 function showResults() {
@@ -393,4 +450,34 @@ function clearHistory() {
         QuizHistory.clear();
         document.getElementById('quiz-summary').remove();
     }
+}
+
+// Theme Toggle
+function initTheme() {
+    const savedTheme = localStorage.getItem('mathQuizTheme') || 'light';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeButton();
+}
+
+function toggleTheme() {
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    const newTheme = current === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('mathQuizTheme', newTheme);
+    updateThemeButton();
+}
+
+function updateThemeButton() {
+    const btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    const current = document.documentElement.getAttribute('data-theme') || 'light';
+    btn.textContent = current === 'light' ? '🌙' : '☀️';
+    btn.setAttribute('aria-label', `Switch to ${current === 'light' ? 'dark' : 'light'} mode`);
+}
+
+// Initialize on load
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initTheme);
+} else {
+    initTheme();
 }
